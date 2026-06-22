@@ -6,16 +6,29 @@ $message = "";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    $stmt = $conn->prepare("INSERT INTO users(username,password) VALUES (?,?)");
-    $stmt->bind_param("ss", $username, $password);
+    // Check username already exists or not
+    $check_stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+    $check_stmt->bind_param("s", $username);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
 
-    if($stmt->execute()){
-        $message = "User Created Successfully!";
+    if ($result->num_rows > 0) {
+
+        $message = "Username already exists! Please choose another username.";
+
     } else {
-        $message = "Error creating user!";
+
+        $stmt = $conn->prepare("INSERT INTO users(username, password) VALUES (?, ?)");
+        $stmt->bind_param("ss", $username, $password);
+
+        if ($stmt->execute()) {
+            $message = "User Created Successfully!";
+        } else {
+            $message = "Error creating user!";
+        }
     }
 }
 ?>
